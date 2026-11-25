@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Especies / Hunter's Cattle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1e222a;
+            color: #d8dee9;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .navbar {
+            background-color: #2e3440;
+            border-bottom: 1px solid #4c566a;
+        }
+        .card-nord {
+            background-color: #2e3440;
+            border: 1px solid #4c566a;
+            color: #d8dee9;
+            border-radius: 12px;
+        }
+        .form-control, .form-select {
+            background-color: #242933;
+            border: 1px solid #4c566a;
+            color: #eceff4;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #242933;
+            border-color: #5fd9fa;
+            color: #eceff4;
+            box-shadow: none;
+        }
+        .form-control::placeholder {
+            color: #9aa5b8;
+        }
+        .btn-nord {
+            background-color: #5fd9fa;
+            color: #1e222a;
+            font-weight: 600;
+            border: none;
+        }
+        .btn-nord:hover {
+            background-color: #5fd9fa;
+            color: #1e222a;
+        }
+        .table-nord {
+            color: #d8dee9;
+            --bs-table-bg: #5fd9fa;
+            --bs-table-border-color: #0055ff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark px-4 py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-info" href="index.html">Hunter's Cattle</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="menuNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="catalogo.html">Catalogo y Compra</a></li>
+                    <li class="nav-item"><a class="nav-link" href="perfiles.html">Fichas Tecnicas</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="admin.html">Administración</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h1 class="h3 fw-bold text-white mb-1">Panel de Administracion Ganadera</h1>
+                <p class="small text-light opacity-75 mb-0">Agrega nuevas razas, regiones de ubicacion y puntos optimos de compra para reproduccion.</p>
+            </div>
+            <button id="btn-restaurar" type="button" class="btn btn-outline-warning btn-sm">Restaurar catalogo base</button>
+        </div>
+
+        <div id="alerta-admin" class="mb-4"></div>
+
+        <section class="card-nord p-4 mb-5">
+            <h2 class="h5 fw-bold text-info mb-3">Registrar Nueva Especie o Raza</h2>
+            <form id="form-especie" class="row g-3">
+                <div class="col-md-4">
+                    <label for="nombre" class="form-label small fw-semibold">Nombre de la raza:</label>
+                    <input type="text" id="nombre" class="form-control" placeholder="Ej. Charolais" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="especie" class="form-label small fw-semibold">Especie:</label>
+                    <select id="especie" class="form-select" required>
+                        <option value="Bovino Toro">Bovino Toro</option>
+                        <option value="Bovino">Bovino</option>
+                        <option value="Ovino">Ovino</option>
+                        <option value="Caprino">Caprino</option>
+                        <option value="Porcino">Porcino</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="estadoPrincipal" class="form-label small fw-semibold">Estado principal:</label>
+                    <input type="text" id="estadoPrincipal" class="form-control" placeholder="Ej. Guanajuato" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="ubicacion" class="form-label small fw-semibold">Ubicacion y zonas donde se ubica:</label>
+                    <input type="text" id="ubicacion" class="form-control" placeholder="Ej. Bajío, Los Altos de Jalisco y Norte de México" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="proposito" class="form-label small fw-semibold">Proposito reproductivo:</label>
+                    <input type="text" id="proposito" class="form-control" placeholder="Ej. Pie de cría cárnico y cruzamiento terminal" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="lugarCompraOptimo" class="form-label small fw-semibold">Lugar optimo de compra para reproducción:</label>
+                    <input type="text" id="lugarCompraOptimo" class="form-control" placeholder="Ej. Subasta Ganadera Regional y Ranchos Certificados" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="tipoProveedor" class="form-label small fw-semibold">Tipo de proveedor:</label>
+                    <input type="text" id="tipoProveedor" class="form-control" placeholder="Ej. Criadores con registro genealógico y sanidad" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="climaOptimo" class="form-label small fw-semibold">Clima optimo</label>
+                    <input type="text" id="climaOptimo" class="form-control" placeholder="Ej. Templado a semiárido">
+                </div>
+                <div class="col-md-4">
+                    <label for="precioEstimado" class="form-label small fw-semibold">Inversion estimada</label>
+                    <input type="text" id="precioEstimado" class="form-control" placeholder="Ej. $38,000 - $58,000 MXN">
+                </div>
+                <div class="col-md-4">
+                    <label for="faoItemCode" class="form-label small fw-semibold">Codigo item FAOSTAT</label>
+                    <input type="text" id="faoItemCode" class="form-control" placeholder="Ej. 866">
+                </div>
+
+                <div class="col-12">
+                    <label for="parametrosReproductivos" class="form-label small fw-semibold">Parametros reproductivos y aptitud:</label>
+                    <textarea id="parametrosReproductivos" rows="2" class="form-control" placeholder="Describe fertilidad, facilidad de parto, edad al primer servicio o adaptación..." required></textarea>
+                </div>
+
+                <div class="col-12">
+                    <label for="imagen" class="form-label small fw-semibold">URL de imagen</label>
+                    <input type="url" id="imagen" class="form-control" placeholder="https://...">
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-nord px-4 py-2">Guardar Especie en Catalogo</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card-nord p-4">
+            <h2 class="h5 fw-bold text-white mb-3">Registros Actuales en el Sistema:</h2>
+            <div class="table-responsive">
+                <table class="table table-nord table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Raza</th>
+                            <th>Especie</th>
+                            <th>Ubicación</th>
+                            <th>Lugar Optimo de Compra</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-ganado"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/ganado.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
