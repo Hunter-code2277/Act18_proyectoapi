@@ -1,16 +1,18 @@
 /**
  * @author Jorge Enrique Parra Garcia
- *Modelo de datos de especies ganaderas, ubicaciones, lugares optimos de compra y consumo activo de la api.
+ * Modelo de datos de especies ganaderas (localStorage) y consumo de API Ninjas Animals API (/v1/animals).
  */
 
 const STORAGE_KEY = "ganado_reproduccion_db";
+const API_NINJAS_KEY = "Vhz70xxlnv2ElWkn59o2P9SB5DgkVrbBSQ5qRINx";
+const NINJAS_CACHE_PREFIX = "agro_ninjas_cache_";
 
-// Catálogo inicial de especies ganaderas orientadas a reproducción
 const ESPECIES_INICIALES = [
     {
         id: 1,
         nombre: "Brahman Rojo",
         especie: "Bovino",
+        queryApi: "cattle",
         proposito: "Reproducción y pie de cría cárnico",
         ubicacion: "Tabasco, Veracruz y Chiapas (Trópico húmedo)",
         estadoPrincipal: "Veracruz",
@@ -19,13 +21,14 @@ const ESPECIES_INICIALES = [
         tipoProveedor: "Subasta ganadera certificada y ranchos de registro genealógico",
         precioEstimado: "$42,000 - $65,000 MXN por semental joven",
         parametrosReproductivos: "Alta fertilidad en clima caluroso, facilidad de parto y gran habilidad materna.",
-        faoItemCode: "866", // Código FAOSTAT para ganado bovino
+        faoItemCode: "866",
         imagen: "https://images.unsplash.com/photo-1546445317-29f4545e9d53?auto=format&fit=crop&w=800&q=80"
     },
     {
         id: 2,
         nombre: "Holstein Friesian",
-        especie: "Bovino Toro",
+        especie: "Bovino",
+        queryApi: "cattle",
         proposito: "Reproducción lechera especializada",
         ubicacion: "Jalisco (Los Altos), Guanajuato y Coahuila (Comarca Lagunera)",
         estadoPrincipal: "Guanajuato",
@@ -41,6 +44,7 @@ const ESPECIES_INICIALES = [
         id: 3,
         nombre: "Dorper",
         especie: "Ovino",
+        queryApi: "sheep",
         proposito: "Reproducción ovina para carne",
         ubicacion: "Querétaro, Hidalgo, Estado de México y Guanajuato",
         estadoPrincipal: "Querétaro",
@@ -49,13 +53,14 @@ const ESPECIES_INICIALES = [
         tipoProveedor: "Apriscos de pie de cría con certificado sanitario libre de brucelosis",
         precioEstimado: "$9,500 - $18,000 MXN por semental",
         parametrosReproductivos: "Poliéstrica anual (reproducción todo el año), alta prolificidad y rápido destete.",
-        faoItemCode: "976", // Código FAOSTAT para ovinos
+        faoItemCode: "976",
         imagen: "https://images.unsplash.com/photo-1484557985045-edf25e08da73?auto=format&fit=crop&w=800&q=80"
     },
     {
         id: 4,
         nombre: "Boer",
         especie: "Caprino",
+        queryApi: "goat",
         proposito: "Reproducción caprina cárnica",
         ubicacion: "Coahuila, Nuevo León, San Luis Potosí y Guanajuato",
         estadoPrincipal: "San Luis Potosí",
@@ -64,13 +69,14 @@ const ESPECIES_INICIALES = [
         tipoProveedor: "Granjas caprinas registradas con control genealógico",
         precioEstimado: "$8,000 - $15,000 MXN por ejemplar reproductor",
         parametrosReproductivos: "Tasa de parición superior al 180% (partos gemelares frecuentes) y excelente adaptación al pastoreo.",
-        faoItemCode: "1016", // Código FAOSTAT para caprinos
+        faoItemCode: "1016",
         imagen: "https://images.unsplash.com/photo-1524024973431-2ad916746881?auto=format&fit=crop&w=800&q=80"
     },
     {
         id: 5,
         nombre: "Duroc",
         especie: "Porcino",
+        queryApi: "pig",
         proposito: "Línea paterna para reproducción porcina",
         ubicacion: "Sonora, Jalisco, Yucatán y Guanajuato",
         estadoPrincipal: "Jalisco",
@@ -79,12 +85,11 @@ const ESPECIES_INICIALES = [
         tipoProveedor: "Centros de transferencia genética y granjas certificadas TIF",
         precioEstimado: "$14,000 - $24,000 MXN por verraco",
         parametrosReproductivos: "Excelente vigor híbrido al cruzar con Landrace o Yorkshire; alta velocidad de crecimiento.",
-        faoItemCode: "1034", // Código FAOSTAT para porcinos
+        faoItemCode: "1034",
         imagen: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=800&q=80"
     }
 ];
 
-// Inicializa los datos en localStorage si aún no existen
 function obtenerGanado() {
     const guardado = localStorage.getItem(STORAGE_KEY);
     if (!guardado) {
@@ -103,17 +108,52 @@ function guardarGanado(lista) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
 }
 
-/* Consumo activo de API pública para enriquecer datos geográficos y de mercado*/
-async function consultarDatosApiSector(pais = "mexico") {
+function resolverQueryNinjas(itemEspecie) {
+    if (itemEspecie && itemEspecie.queryApi) {
+        return itemEspecie.queryApi.trim().toLowerCase();
+    }
+    const t = (itemEspecie?.especie || "").toLowerCase();
+    if (t.includes("bovino") || t.includes("vaca") || t.includes("toro")) return "cattle";
+    if (t.includes("ovino") || t.includes("oveja")) return "sheep";
+    if (t.includes("caprino") || t.includes("cabra")) return "goat";
+    if (t.includes("porcino") || t.includes("cerdo")) return "pig";
+    return "cattle";
+}
+
+/**
+ * Consulta API Ninjas Animals API (/v1/animals) enviando la clave en X-Api-Key.
+ * Guarda el resultado en sessionStorage para optimizar peticiones.
+ */
+async function consultarApiNinjasAnimal(nombreComun) {
+    const consulta = (nombreComun || "cattle").trim().toLowerCase();
+    const claveCache = `${NINJAS_CACHE_PREFIX}${consulta}`;
+    const cacheGuardado = sessionStorage.getItem(claveCache);
+
+    if (cacheGuardado) {
+        return JSON.parse(cacheGuardado);
+    }
+
     try {
-        const respuesta = await fetch(`https://restcountries.com/v3.1/name/${pais}?fields=name,region,subregion,population,currencies`);
+        const url = `https://api.api-ninjas.com/v1/animals?name=${encodeURIComponent(consulta)}`;
+        const respuesta = await fetch(url, {
+            method: "GET",
+            headers: {
+                "X-Api-Key": API_NINJAS_KEY
+            }
+        });
+
         if (!respuesta.ok) {
-            throw new Error("No se pudo conectar con el servicio externo");
+            throw new Error(`Error HTTP ${respuesta.status} al consultar API Ninjas`);
         }
+
         const datos = await respuesta.json();
-        return datos[0];
+        if (Array.isArray(datos) && datos.length > 0) {
+            sessionStorage.setItem(claveCache, JSON.stringify(datos[0]));
+            return datos[0];
+        }
+        return null;
     } catch (error) {
-        console.error("Error al consultar API externa:", error);
+        console.error("Error al consultar API Ninjas Animals:", error);
         return null;
     }
 }

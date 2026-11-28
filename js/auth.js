@@ -1,6 +1,6 @@
 /**
  * @author Jorge Enrique Parra Garcia
- *Autenticacion, registro de usuarios y control de sesion con localStorage.
+ * Autenticación, registro de usuarios (localStorage) y control de sesión/roles (sessionStorage).
  */
 
 const CLAVE_USUARIOS = "agro_usuarios_db";
@@ -17,7 +17,7 @@ const USUARIOS_DEMO = [
         nombreCompleto: "Productor Ganadero Demo",
         usuario: "us1",
         password: "123",
-        rol: "Ganadero"
+        rol: "Usuario final"
     }
 ];
 
@@ -56,7 +56,7 @@ function iniciarSesionUsuario(usuarioInput, passwordInput) {
         ingresoEn: new Date().toISOString()
     };
 
-    localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+    sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
     return { ok: true, sesion };
 }
 
@@ -87,7 +87,7 @@ function registrarUsuario({ nombreCompleto, usuario, password, confirmarPassword
         nombreCompleto: nombreLimpio,
         usuario: usuarioLimpio,
         password: password,
-        rol: "Ganadero"
+        rol: "Usuario final"
     };
 
     usuarios.push(nuevoUsuario);
@@ -100,13 +100,18 @@ function registrarUsuario({ nombreCompleto, usuario, password, confirmarPassword
         ingresoEn: new Date().toISOString()
     };
 
-    localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+    sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
     return { ok: true, sesion };
 }
 
 function obtenerSesionActiva() {
-    const raw = localStorage.getItem(CLAVE_SESION);
+    const raw = sessionStorage.getItem(CLAVE_SESION);
     return raw ? JSON.parse(raw) : null;
+}
+
+function esAdministrador() {
+    const sesion = obtenerSesionActiva();
+    return Boolean(sesion && sesion.rol === "Administrador");
 }
 
 function requerirSesion() {
@@ -115,11 +120,35 @@ function requerirSesion() {
         window.location.href = "login.html";
         return null;
     }
+    aplicarVisibilidadPorRol();
     return sesion;
 }
 
+function requerirAdmin() {
+    const sesion = requerirSesion();
+    if (!sesion) return null;
+
+    if (sesion.rol !== "Administrador") {
+        alert("Acceso denegado: esta sección es exclusiva para el rol Administrador.");
+        window.location.href = "index.html";
+        return null;
+    }
+    return sesion;
+}
+
+function aplicarVisibilidadPorRol() {
+    const admin = esAdministrador();
+    document.querySelectorAll(".solo-admin").forEach(el => {
+        if (admin) {
+            el.classList.remove("d-none");
+        } else {
+            el.classList.add("d-none");
+        }
+    });
+}
+
 function cerrarSesionUsuario() {
-    localStorage.removeItem(CLAVE_SESION);
+    sessionStorage.removeItem(CLAVE_SESION);
     window.location.href = "login.html";
 }
 
@@ -136,8 +165,9 @@ function actualizarBarraSesion() {
     li.className = "nav-item d-flex align-items-center gap-2 ms-lg-2";
 
     if (sesion) {
+        const badgeClass = sesion.rol === "Administrador" ? "bg-warning text-dark" : "bg-info text-dark";
         li.innerHTML = `
-            <span class="badge bg-info text-dark">@${sesion.usuario}</span>
+            <span class="badge ${badgeClass}">@${sesion.usuario} (${sesion.rol})</span>
             <button type="button" class="btn btn-outline-light btn-sm" onclick="cerrarSesionUsuario()">Salir</button>
         `;
     } else {

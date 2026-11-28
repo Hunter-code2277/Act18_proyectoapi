@@ -1,6 +1,6 @@
 /**
  * @author Jorge Enrique Parra Garcia
- *Vista detallada de cada especie ganadera, ubicacion, lugar optimo de compra y datos de la api.
+ * Vista detallada de cada especie ganadera enriquecida con API Ninjas Animals API.
  */
 
 function limpiarNombreEspecie(textoEspecie) {
@@ -42,24 +42,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 
-
 async function mostrarFichaEspecie(especie) {
     const contenedor = document.getElementById("contenedor-ficha");
-    const infoPais = await consultarDatosApiSector("mexico");
+    contenedor.innerHTML = `<p class="text-info mb-0">Consultando datos de la especie en API Ninjas...</p>`;
 
-    const referenciaRegion = infoPais
-        ? `${infoPais.name.common} (${infoPais.subregion})`
-        : "México (referencia local)";
+    const queryApi = resolverQueryNinjas(especie);
+    const infoApi = await consultarApiNinjasAnimal(queryApi);
+
+    const nombreCientifico = infoApi?.taxonomy?.scientific_name || "No reportado en API";
+    const familiaApi = infoApi?.taxonomy?.family || "N/A";
+    const gestacionApi = infoApi?.characteristics?.gestation_period || "No reportada en API";
+    const dietaApi = infoApi?.characteristics?.diet || "N/A";
+    const ubicacionesApi = Array.isArray(infoApi?.locations) && infoApi.locations.length > 0
+        ? infoApi.locations.join(", ")
+        : "Global";
+
+    const botonAdmin = esAdministrador()
+        ? `<a href="admin.html" class="btn btn-outline-light">Editar en Administración</a>`
+        : "";
 
     contenedor.innerHTML = `
         <div class="row g-4 align-items-start">
             <div class="col-lg-5">
-                <img src="${especie.imagen}" alt="${especie.nombre}" class="img-fluid rounded w-100" style="max-height: 340px; object-fit: cover; border: 1px solid #4c566a;">
+                <img src="${especie.imagen}" alt="Ejemplar reproductor de raza ${especie.nombre}" class="img-fluid rounded w-100" style="max-height: 340px; object-fit: cover; border: 1px solid #4c566a;">
                 <div class="bloque-dato mt-3 small">
-                    <h6 class="text-info fw-bold mb-2">Referencia de API y Estadística</h6>
-                    <p class="mb-1"><strong>Región consultada en API:</strong> ${referenciaRegion}</p>
-                    <p class="mb-1"><strong>Código de ítem FAOSTAT:</strong> ${especie.faoItemCode || "N/A"}</p>
-                    <p class="mb-0"><strong>Clima óptimo:</strong> ${especie.climaOptimo}</p>
+                    <h2 class="h6 text-info fw-bold mb-2">Datos desde API Ninjas (Animals API)</h2>
+                    <p class="mb-1"><strong>Consulta API:</strong> <code>?name=${queryApi}</code></p>
+                    <p class="mb-1"><strong>Nombre científico:</strong> <em>${nombreCientifico}</em></p>
+                    <p class="mb-1"><strong>Familia:</strong> ${familiaApi}</p>
+                    <p class="mb-1"><strong>Gestación (API):</strong> ${gestacionApi}</p>
+                    <p class="mb-1"><strong>Dieta (API):</strong> ${dietaApi}</p>
+                    <p class="mb-0"><strong>Distribución (API):</strong> ${ubicacionesApi}</p>
                 </div>
             </div>
 
@@ -69,26 +82,27 @@ async function mostrarFichaEspecie(especie) {
                 <p class="text-info fw-semibold mb-4">${especie.proposito}</p>
 
                 <div class="bloque-dato mb-3">
-                    <h6 class="text-white fw-bold mb-1">Ubicación y Zonas de Presencia</h6>
+                    <h2 class="h6 text-white fw-bold mb-1">Ubicación y Zonas de Presencia</h2>
                     <p class="mb-1 small"><strong>Estado principal:</strong> ${especie.estadoPrincipal}</p>
                     <p class="mb-0 small">${especie.ubicacion}</p>
                 </div>
 
                 <div class="bloque-dato mb-3" style="border-left: 4px solid #5fd9fa;">
-                    <h6 class="text-info fw-bold mb-1">Lugar Óptimo de Compra para Reproducción</h6>
+                    <h2 class="h6 text-info fw-bold mb-1">Lugar Óptimo de Compra para Reproducción</h2>
                     <p class="mb-1 small"><strong>Punto recomendado:</strong> ${especie.lugarCompraOptimo}</p>
                     <p class="mb-1 small"><strong>Tipo de proveedor:</strong> ${especie.tipoProveedor}</p>
                     <p class="mb-0 small"><strong>Inversión estimada:</strong> ${especie.precioEstimado}</p>
                 </div>
 
                 <div class="bloque-dato mb-4">
-                    <h6 class="text-white fw-bold mb-1">Aptitud y Parámetros Reproductivos</h6>
+                    <h2 class="h6 text-white fw-bold mb-1">Aptitud y Parámetros Reproductivos</h2>
                     <p class="mb-0 small">${especie.parametrosReproductivos}</p>
+                    <p class="mb-0 small opacity-75 mt-1"><strong>Clima óptimo:</strong> ${especie.climaOptimo} &bull; <strong>Código FAOSTAT:</strong> ${especie.faoItemCode || "N/A"}</p>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="catalogo.html" class="btn btn-nord">Buscar más razas</a>
-                    <a href="admin.html" class="btn btn-outline-light">Editar o agregar registro</a>
+                    <a href="catalogo.html" class="btn btn-nord">Buscar o cotizar razas</a>
+                    ${botonAdmin}
                 </div>
             </div>
         </div>
